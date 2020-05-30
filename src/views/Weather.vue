@@ -8,44 +8,55 @@
 
 <script>
 import * as am4core from '@amcharts/amcharts4/core'
-import * as am4charts from '@amcharts/amcharts4/charts'
-// eslint-disable-next-line camelcase
-import am4themes_animated from '@amcharts/amcharts4/themes/animated'
+import * as am4maps from '@amcharts/amcharts4/maps'
+import am4geodataWorldLow from '@amcharts/amcharts4-geodata/worldLow'
+import am4themesAnimated from '@amcharts/amcharts4/themes/animated'
 
-am4core.useTheme(am4themes_animated)
+am4core.useTheme(am4themesAnimated)
 export default {
   name: 'WorldMap',
   mounted () {
-    const chart = am4core.create(this.$refs.chartdiv, am4charts.XYChart)
+    // Create map instance
+    const chart = am4core.create('worldmap', am4maps.MapChart)
 
-    chart.paddingRight = 20
+    // Set map definition
+    chart.geodata = am4geodataWorldLow
 
-    const data = []
-    let visits = 10
-    for (let i = 1; i < 366; i++) {
-      visits += Math.round((Math.random() < 0.5 ? 1 : -1) * Math.random() * 10)
-      data.push({ date: new Date(2018, 0, i), name: 'name' + i, value: visits })
-    }
+    // Set projection
+    chart.projection = new am4maps.projections.Orthographic()
+    chart.panBehavior = 'rotateLongLat'
+    chart.deltaLatitude = -20
+    chart.padding(20, 20, 20, 20)
 
-    chart.data = data
+    // limits vertical rotation
+    chart.adapter.add('deltaLatitude', function (delatLatitude) {
+      return am4core.math.fitToRange(delatLatitude, -90, 90)
+    })
 
-    const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
-    dateAxis.renderer.grid.template.location = 0
+    // Create map polygon series
+    const polygonSeries = chart.series.push(new am4maps.MapPolygonSeries())
 
-    const valueAxis = chart.yAxes.push(new am4charts.ValueAxis())
-    valueAxis.tooltip.disabled = true
-    valueAxis.renderer.minWidth = 35
+    // Make map load polygon (like country names) data from GeoJSON
+    polygonSeries.useGeodata = true
 
-    const series = chart.series.push(new am4charts.LineSeries())
-    series.dataFields.dateX = 'date'
-    series.dataFields.valueY = 'value'
+    // Configure series
+    const polygonTemplate = polygonSeries.mapPolygons.template
+    polygonTemplate.tooltipText = '{name}'
+    polygonTemplate.fill = am4core.color('#47c78a')
+    polygonTemplate.stroke = am4core.color('#454a58')
+    polygonTemplate.strokeWidth = 0.5
 
-    series.tooltipText = '{valueY.value}'
-    chart.cursor = new am4charts.XYCursor()
+    const graticuleSeries = chart.series.push(new am4maps.GraticuleSeries())
+    graticuleSeries.mapLines.template.line.stroke = am4core.color('#ffffff')
+    graticuleSeries.mapLines.template.line.strokeOpacity = 0.08
+    graticuleSeries.fitExtent = false
 
-    const scrollbarX = new am4charts.XYChartScrollbar()
-    scrollbarX.series.push(series)
-    chart.scrollbarX = scrollbarX
+    chart.backgroundSeries.mapPolygons.template.polygon.fillOpacity = 0.1
+    chart.backgroundSeries.mapPolygons.template.polygon.fill = am4core.color('#ffffff')
+
+    // Create hover state and set alternative fill color
+    const hs = polygonTemplate.states.create('hover')
+    hs.properties.fill = chart.colors.getIndex(0).brighten(-0.5)
 
     this.chart = chart
   },
@@ -61,5 +72,7 @@ export default {
   .worldmap {
     width: 100%;
     height: 500px;
+    max-width:100%;
+    background-color:#454a58;
   }
 </style>
