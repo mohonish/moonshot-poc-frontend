@@ -1,7 +1,7 @@
 <template>
-  <div class="weather">
+  <div class="randomview">
     <h2>Weather Data</h2>
-    <div class="worldmap" ref="chartdiv">
+    <div class="chart" ref="chartdiv">
     </div>
   </div>
 </template>
@@ -58,7 +58,7 @@ export default {
 </script>
 
 <style scoped>
-  .worldmap {
+  .chart {
     width: 100%;
     height: 500px;
   }
