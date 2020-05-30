@@ -25,13 +25,16 @@ export default {
     // Set projection
     chart.projection = new am4maps.projections.Orthographic()
     chart.panBehavior = 'rotateLongLat'
-    chart.deltaLatitude = -20
+    chart.deltaLatitude = -13
+    chart.deltaLongitude = -139
     chart.padding(20, 20, 20, 20)
 
     // limits vertical rotation
-    chart.adapter.add('deltaLatitude', function (delatLatitude) {
-      return am4core.math.fitToRange(delatLatitude, -90, 90)
+    /*
+    chart.adapter.add('deltaLatitude', function (deltaLatitude) {
+      return am4core.math.fitToRange(deltaLatitude, -90, 90)
     })
+     */
 
     // Create map polygon series
     const polygonSeries = chart.series.push(new am4maps.MapPolygonSeries())
@@ -57,6 +60,24 @@ export default {
     // Create hover state and set alternative fill color
     const hs = polygonTemplate.states.create('hover')
     hs.properties.fill = chart.colors.getIndex(0).brighten(-0.5)
+
+    // Create ISS Marker
+    const imageSeries = chart.series.push(new am4maps.MapImageSeries())
+    const imageSeriesTemplate = imageSeries.mapImages.template
+    const circle = imageSeriesTemplate.createChild(am4core.Circle)
+    circle.radius = 4
+    circle.fill = am4core.color('#B27799')
+    circle.stroke = am4core.color('#FFFFFF')
+    circle.strokeWidth = 2
+    circle.nonScaling = true
+    circle.tooltipText = '{title}'
+    imageSeriesTemplate.propertyFields.latitude = 'latitude'
+    imageSeriesTemplate.propertyFields.longitude = 'longitude'
+    imageSeries.data = [{
+      latitude: 40.712775,
+      longitude: -74.005973,
+      title: 'ISS'
+    }]
 
     this.chart = chart
   },
