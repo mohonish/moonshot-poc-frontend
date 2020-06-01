@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+
+  frontend:
+    build:
+      context: . # Use an image built from Dockerfile in current dir.
+      dockerfile: Dockerfile
+    ports: # forward port from container to host machine
+      - "8080:8080"
+    restart: unless-stopped
+
+networks:
+  default:
+    external:
+      name: moonshot-poc-backend_default
