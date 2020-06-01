@@ -3,6 +3,7 @@ version: '3'
 services:
 
   frontend:
+    container_name: moonshot-poc-frontend
     build:
       context: . # Use an image built from Dockerfile in current dir.
       dockerfile: Dockerfile
