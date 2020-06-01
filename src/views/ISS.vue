@@ -1,7 +1,15 @@
 <template>
-  <div class="weather">
-    <h2>Weather Data</h2>
+  <div class="iss">
+    <h2>ISS Position</h2>
     <div class="worldmap" ref="chartdiv">
+    </div>
+    <div class="detail">
+      <h4>Lat: {{ position.lat }} | Long: {{ position.long }}</h4>
+      <h4>Time: {{ position.timestamp }}</h4>
+      <button v-on:click="fetchPosition">Force Fetch</button>
+      <p>Every 10 seconds the ISS position is updated using backend service</p>
+      <p>The ISS orbits the earth once every 93 minutes (roughly), completing 15.5 orbits per day (Source: <a href="https://en.wikipedia.org/wiki/International_Space_Station">Wikipedia</a>)</p>
+      <p>Inspired from and actual data API at <a href="http://open-notify.org/Open-Notify-API/">Open Notify</a>.</p>
     </div>
   </div>
 </template>
@@ -11,10 +19,24 @@ import * as am4core from '@amcharts/amcharts4/core'
 import * as am4maps from '@amcharts/amcharts4/maps'
 import am4geodataWorldLow from '@amcharts/amcharts4-geodata/worldLow'
 import am4themesAnimated from '@amcharts/amcharts4/themes/animated'
+import axios from 'axios'
 
 am4core.useTheme(am4themesAnimated)
 export default {
   name: 'WorldMap',
+  data () {
+    return {
+      position: {
+        lat: 40.440624,
+        long: -79.995888,
+        timestamp: null
+      },
+      polling: null
+    }
+  },
+  created () {
+    this.pollPosition()
+  },
   mounted () {
     // Create map instance
     const chart = am4core.create('worldmap', am4maps.MapChart)
@@ -23,10 +45,10 @@ export default {
     chart.geodata = am4geodataWorldLow
 
     // Set projection
-    chart.projection = new am4maps.projections.Orthographic()
-    chart.panBehavior = 'rotateLongLat'
-    chart.deltaLatitude = -13
-    chart.deltaLongitude = -139
+    chart.projection = new am4maps.projections.NaturalEarth1()
+    chart.panBehavior = 'rotateLong'
+    // chart.deltaLatitude = this.position.lat
+    chart.deltaLongitude = this.position.long
     chart.padding(20, 20, 20, 20)
 
     // limits vertical rotation
@@ -74,17 +96,48 @@ export default {
     imageSeriesTemplate.propertyFields.latitude = 'latitude'
     imageSeriesTemplate.propertyFields.longitude = 'longitude'
     imageSeries.data = [{
-      latitude: 40.712775,
-      longitude: -74.005973,
+      latitude: this.position.lat,
+      longitude: this.position.long,
       title: 'ISS'
     }]
 
     this.chart = chart
+    this.chartPointer = imageSeries
+
+    // Update with api data
+    setTimeout(() => this.fetchPosition(), 100)
+  },
+  methods: {
+    pollPosition: function () {
+      this.polling = setInterval(() => {
+        this.fetchPosition()
+      }, 10 * 1000)
+    },
+    fetchPosition: function () {
+      axios.get('http://localhost:8081/api/v1/iss/coordinates')
+        .then(response => {
+          console.log(response)
+          this.position = {
+            lat: response.data.iss_position.latitude,
+            long: response.data.iss_position.longitude,
+            timestamp: new Date(response.data.timestamp)
+          }
+          // this.chart.deltaLatitude = this.position.lat
+          this.chart.deltaLongitude = -this.position.long
+          this.chartPointer.data = [{
+            latitude: this.position.lat,
+            longitude: this.position.long,
+            title: 'ISS'
+          }]
+        })
+        .catch(error => console.log(error))
+    }
   },
   beforeDestroy () {
     if (this.chart) {
       this.chart.dispose()
     }
+    clearInterval(this.polling)
   }
 }
 </script>
