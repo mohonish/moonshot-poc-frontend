@@ -114,7 +114,9 @@ export default {
       }, 10 * 1000)
     },
     fetchPosition: function () {
-      axios.get('http://localhost:8081/api/v1/iss/coordinates')
+      // axios.get('http://localhost:8081/api/v1/iss/coordinates')
+      // workaround for docker networking bug.
+      axios.get('http://128.2.204.246:8081/api/v1/iss/coordinates')
         .then(response => {
           console.log(response)
           this.position = {
